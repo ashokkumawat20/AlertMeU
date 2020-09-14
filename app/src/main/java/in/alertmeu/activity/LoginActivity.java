@@ -22,8 +22,15 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -33,6 +40,13 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FacebookAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.hbb20.CountryCodePicker;
 
 import org.json.JSONArray;
@@ -85,14 +99,82 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     Resources res;
     private static final String FILE_NAME = "file_lang";
     private static final String KEY_LANG = "key_lang";
-
+    //facebook
+    private CallbackManager mCallbackManager;
+    private FirebaseAuth mFirebaseAuth;
+    String account_status = "";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         loadLanguage();
         res = getResources();
         setContentView(R.layout.activity_login);
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        mCallbackManager = CallbackManager.Factory.create();
+        LoginButton loginButton = findViewById(R.id.login_button);
 
+        //Setting the permission that we need to read
+        loginButton.setReadPermissions("user_photos", "email", "user_birthday");
+
+        //Registering callback!
+        loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                //Sign in completed
+                Log.i(TAG, "onSuccess: logged in successfully");
+
+                //handling the token for Firebase Auth
+                handleFacebookAccessToken(loginResult.getAccessToken());
+
+                //Getting the user information
+                GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response) {
+                        // Application code
+                        Log.i(TAG, "onCompleted: response: " + response.toString());
+                        try {
+                            String id = object.getString("id");
+                            String name = object.getString("name");
+                           // String email = object.getString("email");
+                           // Log.i(TAG, "onCompleted: Email: " + email);
+
+                            if (!name.equals("")) {
+                                String columns[] = name.split(" ");
+                                first_name = columns[0];
+                                last_name = columns[1];
+
+                            }
+                            email_id=id;
+                            prefEditor.putString("user_name", name);
+                            prefEditor.putString("userEmail", id);
+                            prefEditor.commit();
+                            account_status="4";
+                            new userRegistration().execute();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Log.i(TAG, "onCompleted: JSON exception");
+                        }
+                    }
+                });
+
+                Bundle parameters = new Bundle();
+                parameters.putString("fields", "id,name,email,gender,birthday");
+                request.setParameters(parameters);
+                request.executeAsync();
+
+            }
+
+            @Override
+            public void onCancel() {
+                Log.d(TAG, "facebook:onCancel");
+            }
+
+            @Override
+            public void onError(FacebookException error) {
+                Log.d(TAG, "facebook:onError", error);
+            }
+        });
         fa = this;
         preferences = getSharedPreferences("Prefrence", Context.MODE_PRIVATE);
         prefEditor = preferences.edit();
@@ -122,6 +204,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         // ccp.setNumberAutoFormattingEnabled(true);
         ccp.isValidFullNumber();
         ccp.setCountryPreference(ccp.getDefaultCountryNameCode());
+        ccp.setOnCountryChangeListener(new CountryCodePicker.OnCountryChangeListener() {
+            @Override
+            public void onCountrySelected() {
+                // Toast.makeText(getApplicationContext(), "Updated " + ccp.getSelectedCountryCodeWithPlus(), Toast.LENGTH_SHORT).show();
+                prefEditor.putString("country_code", ccp.getSelectedCountryCodeWithPlus());
+                prefEditor.commit();
+            }
+        });
         ccp.setPhoneNumberValidityChangeListener(new CountryCodePicker.PhoneNumberValidityChangeListener() {
             @Override
             public void onValidityChanged(boolean isValidNumber) {
@@ -503,6 +593,32 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         return true;
     }
     //
+    //facebook
+    private void handleFacebookAccessToken(AccessToken token) {
+        Log.d(TAG, "handleFacebookAccessToken:" + token);
+
+        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
+        mFirebaseAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInWithCredential:success");
+                            FirebaseUser user = mFirebaseAuth.getCurrentUser();
+                            Log.i(TAG, "onComplete: login completed with user: " + user.getDisplayName());
+
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInWithCredential:failure", task.getException());
+                            Toast.makeText(LoginActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+
+                        // ...
+                    }
+                });
+    }
 
     private void signIn() {
 
@@ -537,7 +653,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             prefEditor.putString("userEmail", email);
             prefEditor.putString("pic_name", personPhotoUrl);
             prefEditor.commit();
-
+            account_status = "3";
             new userRegistration().execute();
 
            /* txtName.setText(personName);
@@ -575,6 +691,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
         }
+        else {
+            mCallbackManager.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
@@ -600,6 +719,15 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     handleSignInResult(googleSignInResult);
                 }
             });
+        }
+
+        // Check if user is signed in (non-null) and update UI accordingly.
+        FirebaseUser currentUser = mFirebaseAuth.getCurrentUser();
+        if (currentUser != null) {
+           // Log.i(TAG, "onStart: Someone logged in <3"+currentUser.getDisplayName()+" "+currentUser.getEmail());
+          //  Log.i(TAG, "onStart: Someone logged in <3"+currentUser.getDisplayName()+" "+currentUser.getEmail());
+        } else {
+            Log.i(TAG, "onStart: No one logged in :/");
         }
     }
 
@@ -669,6 +797,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         put("country_code", preferences.getString("country_code", ""));
                         put("latitude", preferences.getString("ur_l", ""));
                         put("longitude", preferences.getString("ur_lo", ""));
+                        put("account_status", account_status);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -728,8 +857,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             prefEditor.putString("pic_name", UJsonObject.getString("profilePath"));
                             prefEditor.putInt("units_for_area", 15);
                             prefEditor.putString("notifyonoff", "1");
-                            prefEditor.putString("app_login", "3");
-                            prefEditor.putString("account_status", "3");
+                            prefEditor.putString("app_login", account_status);
+                            prefEditor.putString("account_status", account_status);
                             prefEditor.commit();
                         }
                     } catch (JSONException e) {

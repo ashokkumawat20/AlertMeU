@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
         prefEditor.putString("country_code", ccp.getSelectedCountryCodeWithPlus());
         prefEditor.commit();
 // create class object
-        for (int i = 0; i <= 30; i++) {
+        for (int i = 0; i <= 5; i++) {
             gps = new GPSTracker(MainActivity.this);
         }
 

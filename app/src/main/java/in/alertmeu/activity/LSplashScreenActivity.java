@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -123,16 +124,22 @@ public class LSplashScreenActivity extends AppCompatActivity {
 
     private boolean checkAndRequestPermissions() {
 
-
-        int permissionLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-        int writepermission = ContextCompat.checkSelfPermission(LSplashScreenActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
         List<String> listPermissionsNeeded = new ArrayList<>();
+        int permissionLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            int locpermission = ContextCompat.checkSelfPermission(LSplashScreenActivity.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+            if (locpermission != PackageManager.PERMISSION_GRANTED) {
+                listPermissionsNeeded.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+            }
+        }
+
+        int writepermission = ContextCompat.checkSelfPermission(LSplashScreenActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
 
         if (permissionLocation != PackageManager.PERMISSION_GRANTED) {
             listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
+
         if (writepermission != PackageManager.PERMISSION_GRANTED) {
             listPermissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         }
@@ -155,6 +162,9 @@ public class LSplashScreenActivity extends AppCompatActivity {
                 // Initialize the map with both permissions
 
                 perms.put(Manifest.permission.ACCESS_FINE_LOCATION, PackageManager.PERMISSION_GRANTED);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    perms.put(Manifest.permission.ACCESS_BACKGROUND_LOCATION, PackageManager.PERMISSION_GRANTED);
+                }
                 perms.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
 
                 // Fill with actual results from user
@@ -162,54 +172,105 @@ public class LSplashScreenActivity extends AppCompatActivity {
                     for (int i = 0; i < permissions.length; i++)
                         perms.put(permissions[i], grantResults[i]);
                     // Check for both permissions
-                    if (perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && perms.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                        Log.d(TAG, "sms & location services permission granted");
-                        // process the normal flow
-                        String cs = getLangCode();
-                        if (!cs.equals("")) {
-                            Intent i = new Intent(LSplashScreenActivity.this, SplashActivity.class);
-                            startActivity(i);
-                            finish();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        if (perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && perms.get(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED && perms.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                            Log.d(TAG, "sms & location services permission granted");
+                            // process the normal flow
+                            String cs = getLangCode();
+                            if (!cs.equals("")) {
+                                Intent i = new Intent(LSplashScreenActivity.this, SplashActivity.class);
+                                startActivity(i);
+                                finish();
+                            } else {
+                                Intent i = new Intent(LSplashScreenActivity.this, LSelectActivity.class);
+                                startActivity(i);
+                                finish();
+                            }
+                            //else any one or both the permissions are not granted
                         } else {
-                            Intent i = new Intent(LSplashScreenActivity.this, LSelectActivity.class);
-                            startActivity(i);
-                            finish();
-                        }
-                        //else any one or both the permissions are not granted
-                    } else {
-                        Log.d(TAG, "Some permissions are not granted ask again ");
-                        //permission is denied (this is the first time, when "never ask again" is not checked) so ask again explaining the usage of permission
+                            Log.d(TAG, "Some permissions are not granted ask again ");
+                            //permission is denied (this is the first time, when "never ask again" is not checked) so ask again explaining the usage of permission
 //                        // shouldShowRequestPermissionRationale will return true
-                        //show the dialog or snackbar saying its necessary and try again otherwise proceed with setup.
-                        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                            showDialogOK("Service Permissions are required for this app",
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            switch (which) {
-                                                case DialogInterface.BUTTON_POSITIVE:
-                                                    checkAndRequestPermissions();
-                                                    break;
-                                                case DialogInterface.BUTTON_NEGATIVE:
-                                                    // proceed with logic by disabling the related features or quit the app.
-                                                    finish();
-                                                    break;
+                            //show the dialog or snackbar saying its necessary and try again otherwise proceed with setup.
+                            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                                showDialogOK("Service Permissions are required for this app",
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                switch (which) {
+                                                    case DialogInterface.BUTTON_POSITIVE:
+                                                        checkAndRequestPermissions();
+                                                        break;
+                                                    case DialogInterface.BUTTON_NEGATIVE:
+                                                        // proceed with logic by disabling the related features or quit the app.
+                                                        finish();
+                                                        break;
+                                                }
                                             }
-                                        }
-                                    });
+                                        });
+                            }
+                            //permission is denied (and never ask again is  checked)
+                            //shouldShowRequestPermissionRationale will return false
+                            else {
+                                explain("You need to give some mandatory permissions to continue. Do you want to go to app settings?");
+                                //                            //proceed with logic by disabling the related features or quit the app.
+                            }
                         }
-                        //permission is denied (and never ask again is  checked)
-                        //shouldShowRequestPermissionRationale will return false
-                        else {
-                            explain("You need to give some mandatory permissions to continue. Do you want to go to app settings?");
-                            //                            //proceed with logic by disabling the related features or quit the app.
+
+
+                    } else {
+                        if (perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && perms.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                            Log.d(TAG, "sms & location services permission granted");
+                            // process the normal flow
+                            String cs = getLangCode();
+                            if (!cs.equals("")) {
+                                Intent i = new Intent(LSplashScreenActivity.this, SplashActivity.class);
+                                startActivity(i);
+                                finish();
+                            } else {
+                                Intent i = new Intent(LSplashScreenActivity.this, LSelectActivity.class);
+                                startActivity(i);
+                                finish();
+                            }
+                            //else any one or both the permissions are not granted
+                        } else {
+                            Log.d(TAG, "Some permissions are not granted ask again ");
+                            //permission is denied (this is the first time, when "never ask again" is not checked) so ask again explaining the usage of permission
+//                        // shouldShowRequestPermissionRationale will return true
+                            //show the dialog or snackbar saying its necessary and try again otherwise proceed with setup.
+                            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)  || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                                showDialogOK("Service Permissions are required for this app",
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                switch (which) {
+                                                    case DialogInterface.BUTTON_POSITIVE:
+                                                        checkAndRequestPermissions();
+                                                        break;
+                                                    case DialogInterface.BUTTON_NEGATIVE:
+                                                        // proceed with logic by disabling the related features or quit the app.
+                                                        finish();
+                                                        break;
+                                                }
+                                            }
+                                        });
+                            }
+                            //permission is denied (and never ask again is  checked)
+                            //shouldShowRequestPermissionRationale will return false
+                            else {
+                                explain("You need to give some mandatory permissions to continue. Do you want to go to app settings?");
+                                //                            //proceed with logic by disabling the related features or quit the app.
+                            }
                         }
+
+
                     }
+                }
                 }
             }
         }
 
-    }
+
 
     private void showDialogOK(String message, DialogInterface.OnClickListener okListener) {
         new AlertDialog.Builder(this)
@@ -244,7 +305,8 @@ public class LSplashScreenActivity extends AppCompatActivity {
         String langCode = preferences.getString(KEY_LANG, "");
         return langCode;
     }
-    private void  loadLanguage() {
+
+    private void loadLanguage() {
         Locale locale = new Locale(getLangCode());
         Locale.setDefault(locale);
         Configuration config = new Configuration();

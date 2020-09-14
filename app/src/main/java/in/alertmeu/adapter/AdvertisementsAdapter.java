@@ -12,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,9 +60,10 @@ public class AdvertisementsAdapter extends RecyclerView.Adapter<AdvertisementsAd
         /*ImageLoader imageLoader = new ImageLoader(context);
         imageLoader.DisplayImage(advertisements.get(position).getOriginal_image_path(),mobileImageView);
         mobileImageView.setTag(position);*/
-        ImageloaderNew imageLoader = new ImageloaderNew(context);
-        mobileImageView.setTag(advertisements.get(position).getOriginal_image_path());
-        imageLoader.DisplayImage(advertisements.get(position).getOriginal_image_path(), context, mobileImageView);
+        //ImageloaderNew imageLoader = new ImageloaderNew(context);
+      //  mobileImageView.setTag(advertisements.get(position).getOriginal_image_path());
+       // imageLoader.DisplayImage(advertisements.get(position).getOriginal_image_path(), context, mobileImageView);
+        Picasso.with(context).load(advertisements.get(position).getOriginal_image_path()).noPlaceholder().into((ImageView) mobileImageView);
         //   mobileImageView.setTag(position);
         TextView modelTextView = (TextView) holder.modelName;
         modelTextView.setText(advertisements.get(position).title);

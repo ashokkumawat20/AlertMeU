@@ -111,7 +111,150 @@
                         android:hint="@string/regReEnterReferral"
                         android:inputType="textCapWords"
                         android:singleLine="true"
-                        android:textColorHint="@drawable/selector" />
+                        android:textColorHint="@drawable/selector"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="10">
+
+                        <EditText
+                            android:id="@+id/editText1"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:gravity="center"
+                            android:maxLength="1"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight=".5"
+                            android:gravity="center"
+                            android:text="-"
+                            android:textSize="25sp"
+                            android:textStyle="bold"></TextView>
+
+                        <EditText
+                            android:id="@+id/editText2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:gravity="center"
+                            android:maxLength="1"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+
+                        <EditText
+                            android:id="@+id/editText3"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:gravity="center"
+                            android:maxLength="1"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+
+                        <EditText
+                            android:id="@+id/editText4"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:gravity="center"
+                            android:maxLength="1"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+
+                        <EditText
+                            android:id="@+id/editText5"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:gravity="center"
+                            android:maxLength="1"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight=".5"
+                            android:gravity="center"
+                            android:text="-"
+                            android:textSize="25sp"
+                            android:textStyle="bold"></TextView>
+
+                        <EditText
+                            android:id="@+id/editText6"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:gravity="center"
+                            android:maxLength="1"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+
+                        <EditText
+                            android:id="@+id/editText7"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:gravity="center"
+                            android:maxLength="1"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+
+                        <EditText
+                            android:id="@+id/editText8"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:maxLength="1"
+                            android:gravity="center"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+
+                        <EditText
+                            android:id="@+id/editText9"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xsmall"
+                            android:layout_weight="1"
+                            android:editable="false"
+                            android:maxLength="1"
+                            android:gravity="center"
+                            android:inputType="textCapWords"
+                            android:singleLine="true"
+                            android:textColorHint="@drawable/selector" />
+                    </LinearLayout>
 
                     <Button
                         android:id="@+id/btnApply"
@@ -206,6 +349,16 @@
                     android:textAllCaps="false"
                     android:textColor="@color/textcolor"
                     android:textSize="16sp" />
+
+                <com.facebook.login.widget.LoginButton
+                    android:id="@+id/login_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="30dp"
+                    android:layout_marginBottom="30dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="15dp" />
 
                 <com.google.android.gms.common.SignInButton
                     android:id="@+id/btn_sign_in"

@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.login.LoginManager;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
@@ -187,6 +188,7 @@ public class LogoutActivity extends AppCompatActivity implements
                 prefEditor.commit();
                 try {
                     Auth.GoogleSignInApi.signOut(mGoogleApiClient);
+                    LoginManager.getInstance().logOut();
                 } catch (Exception e) {
                 }
                 Intent intent = new Intent(LogoutActivity.this, SplashScreenActivity.class);

@@ -105,13 +105,13 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         } else if (preferences.getString("ulang", "").equals("hi")) {
             viewHolderChild.childItem.setText(detailInfo.getSubcategory_name_hindi().trim());
         }
-      //  viewHolderChild.subimage.setTag(childPosition);
+         viewHolderChild.subimage.setTag(childPosition);
         if (!detailInfo.getImage_path().equals("")) {
-           // ImageLoader imageLoader = new ImageLoader(context);
-          //  imageLoader.DisplayImage(detailInfo.getImage_path(), viewHolderChild.subimage);
-            ImageloaderNew imageLoader = new ImageloaderNew(context);
+            ImageLoader imageLoader = new ImageLoader(context);
+            imageLoader.DisplayImage(detailInfo.getImage_path(), viewHolderChild.subimage);
+           /* ImageloaderNew imageLoader = new ImageloaderNew(context);
             viewHolderChild.subimage.setTag(detailInfo.getImage_path());
-            imageLoader.DisplayImage(detailInfo.getImage_path(), context,  viewHolderChild.subimage);
+            imageLoader.DisplayImage(detailInfo.getImage_path(), context,  viewHolderChild.subimage);*/
         } else {
             //  viewHolderChild.subimage.setImageResource(R.drawable.default_sub_category);
             viewHolderChild.subimage.setImageDrawable(context.getResources().getDrawable(R.drawable.default_sub_category));
@@ -182,17 +182,24 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     public long getGroupId(int groupPosition) {
         return groupPosition;
     }
-    @Override
+    /*@Override
     public void notifyDataSetChanged()
     {
         // Refresh List rows
         super.notifyDataSetChanged();
-    }
+    }*/
     @Override
     public View getGroupView(int groupPosition, boolean isLastChild, View view, ViewGroup parent) {
 
         MainCatModeDAO headerInfo = (MainCatModeDAO) getGroup(groupPosition);
         final ViewHolderMain viewHolderMain;
+      /*  LayoutInflater inf = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        view = inf.inflate(R.layout.group_items, parent, false);
+        viewHolderMain = new ViewHolderMain();
+        viewHolderMain.heading = view.findViewById(R.id.heading);
+        viewHolderMain.mimage = view.findViewById(R.id.mimage);
+        view.setTag(viewHolderMain);*/
+
         if (view == null) {
             LayoutInflater inf = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = inf.inflate(R.layout.group_items, parent, false);
@@ -206,14 +213,14 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         //  TextView heading = (TextView) view.findViewById(R.id.heading);
         // ImageView mimage = (ImageView) view.findViewById(R.id.mimage);
         viewHolderMain.heading.setTag(groupPosition);
-     //   viewHolderMain.mimage.setTag(groupPosition);
+        viewHolderMain.mimage.setTag(groupPosition);
         if (!headerInfo.getImage_path().equals("")) {
-           /* ImageLoader imageLoader = new ImageLoader(context);
+            ImageLoader imageLoader = new ImageLoader(context);
             imageLoader.DisplayImage(headerInfo.getImage_path(), viewHolderMain.mimage);
-*/
-            ImageloaderNew imageLoader = new ImageloaderNew(context);
+
+          /*  ImageloaderNew imageLoader = new ImageloaderNew(context);
             viewHolderMain.mimage.setTag(headerInfo.getImage_path());
-            imageLoader.DisplayImage(headerInfo.getImage_path(), context, viewHolderMain.mimage);
+            imageLoader.DisplayImage(headerInfo.getImage_path(), context, viewHolderMain.mimage);*/
         } else {
             viewHolderMain.mimage.setImageDrawable(context.getResources().getDrawable(R.drawable.default_category));
 

@@ -15,8 +15,10 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -30,6 +32,16 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -39,6 +51,13 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FacebookAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.hbb20.CountryCodePicker;
 
 import org.json.JSONArray;
@@ -91,12 +110,86 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
     Resources res;
     private static final String FILE_NAME = "file_lang";
     private static final String KEY_LANG = "key_lang";
+    //facebook
+    private CallbackManager mCallbackManager;
+    private FirebaseAuth mFirebaseAuth;
+    String account_status = "";
+    private EditText editText1, editText2, editText3, editText4, editText5, editText6, editText7, editText8, editText9;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         loadLanguage();
         res = getResources();
         setContentView(R.layout.activity_register_nget_start);
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        mCallbackManager = CallbackManager.Factory.create();
+        LoginButton loginButton = findViewById(R.id.login_button);
+
+        //Setting the permission that we need to read
+        loginButton.setReadPermissions("user_photos", "email", "user_birthday");
+
+        //Registering callback!
+        loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                //Sign in completed
+                Log.i(TAG, "onSuccess: logged in successfully");
+
+                //handling the token for Firebase Auth
+                handleFacebookAccessToken(loginResult.getAccessToken());
+
+                //Getting the user information
+                GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response) {
+                        // Application code
+                        Log.i(TAG, "onCompleted: response: " + response.toString());
+                        try {
+                            String name = object.getString("name");
+                            String id = object.getString("id");
+                            Log.i(TAG, "onCompleted: Email: " + id);
+
+                            if (!name.equals("")) {
+                                String columns[] = name.split(" ");
+                                first_name = columns[0];
+                                last_name = columns[1];
+
+                            }
+                            email_id = id;
+                            prefEditor.putString("user_name", name);
+                            prefEditor.putString("userEmail", id);
+                            prefEditor.commit();
+                            account_status = "4";
+                            new userRegistration().execute();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Log.i(TAG, "onCompleted: JSON exception");
+                        }
+                    }
+                });
+
+                Bundle parameters = new Bundle();
+                parameters.putString("fields", "id,name,email,gender,birthday");
+                request.setParameters(parameters);
+                request.executeAsync();
+
+            }
+
+            @Override
+            public void onCancel() {
+                Log.d(TAG, "facebook:onCancel");
+            }
+
+            @Override
+            public void onError(FacebookException error) {
+                Log.d(TAG, "facebook:onError", error);
+            }
+        });
+
+
+//       AppEventsLogger.activateApp(getApplicationContext());
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"),
                 Locale.getDefault());
         Date currentLocalTime = calendar.getTime();
@@ -115,6 +208,15 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
         signGuestButton = (Button) findViewById(R.id.signGuestButton);
         warning = (TextView) findViewById(R.id.warning);
         usedCode = (TextView) findViewById(R.id.usedCode);
+        editText1 = (EditText) findViewById(R.id.editText1);
+        editText2 = (EditText) findViewById(R.id.editText2);
+        editText3 = (EditText) findViewById(R.id.editText3);
+        editText4 = (EditText) findViewById(R.id.editText4);
+        editText5 = (EditText) findViewById(R.id.editText5);
+        editText6 = (EditText) findViewById(R.id.editText6);
+        editText7 = (EditText) findViewById(R.id.editText7);
+        editText8 = (EditText) findViewById(R.id.editText8);
+        editText9 = (EditText) findViewById(R.id.editText9);
         btnSignIn = (SignInButton) findViewById(R.id.btn_sign_in);
         btnSignIn.setOnClickListener(this);
         ccp = (CountryCodePicker) findViewById(R.id.ccp);
@@ -123,6 +225,15 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
         ccp.isValidFullNumber();
         deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         ccp.setCountryPreference(ccp.getDefaultCountryNameCode());
+        ccp.setOnCountryChangeListener(new CountryCodePicker.OnCountryChangeListener() {
+            @Override
+            public void onCountrySelected() {
+                //  String CountryCode = Locale.getDefault().getCountry();
+                //  Toast.makeText(getApplicationContext(), "Updated " + CountryCode, Toast.LENGTH_SHORT).show();
+                prefEditor.putString("country_code", ccp.getSelectedCountryCodeWithPlus());
+                prefEditor.commit();
+            }
+        });
         ccp.setPhoneNumberValidityChangeListener(new CountryCodePicker.PhoneNumberValidityChangeListener() {
             @Override
             public void onValidityChanged(boolean isValidNumber) {
@@ -138,7 +249,248 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                 }
             }
         });
+        editText1.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editText1.getText().toString().length() == 1) {
+                    editText2.requestFocus();
+                }
+                referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                if (referral_code.length()==9) {
+                    new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        editText2.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (editText2.getText().toString().length() == 0) {
+                    editText1.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editText2.getText().toString().length() == 1) {
+                    editText3.requestFocus();
+                }
+                referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                if (referral_code.length()==9) {
+                    new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        editText3.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (editText3.getText().toString().length() == 0) {
+                    editText2.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editText3.getText().toString().length() == 1) {
+                    editText4.requestFocus();
+                }
+                referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                if (referral_code.length()==9) {
+                    new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        editText4.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (editText4.getText().toString().length() == 0) {
+                    editText3.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editText4.getText().toString().length() == 1) {
+                    editText5.requestFocus();
+                }
+                referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                if (referral_code.length()==9) {
+                    new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+                // We can call api to verify the OTP here or on an explicit button click
+                // Toast.makeText(getApplicationContext(), "Hello", Toast.LENGTH_SHORT).show();
+            }
+        });
+        editText5.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (editText5.getText().toString().length() == 0) {
+                    editText4.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editText5.getText().toString().length() == 1) {
+                    editText6.requestFocus();
+                }
+                referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                if (referral_code.length()==9) {
+                    new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+                // We can call api to verify the OTP here or on an explicit button click
+                // Toast.makeText(getApplicationContext(), "Hello", Toast.LENGTH_SHORT).show();
+            }
+        });
+        editText6.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (editText6.getText().toString().length() == 0) {
+                    editText5.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editText6.getText().toString().length() == 1) {
+                    editText7.requestFocus();
+                }
+                referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                if (referral_code.length()==9) {
+                    new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+                // We can call api to verify the OTP here or on an explicit button click
+                //  Toast.makeText(getApplicationContext(), "Hello", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        editText7.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (editText7.getText().toString().length() == 0) {
+                    editText6.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editText7.getText().toString().length() == 1) {
+                    editText8.requestFocus();
+                }
+                referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                if (referral_code.length()==9) {
+                    new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+                // We can call api to verify the OTP here or on an explicit button click
+                //  Toast.makeText(getApplicationContext(), "Hello", Toast.LENGTH_SHORT).show();
+            }
+        });
+        editText8.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (editText8.getText().toString().length() == 0) {
+                    editText7.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editText8.getText().toString().length() == 1) {
+                    editText9.requestFocus();
+                }
+                referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                if (referral_code.length()==9) {
+                     new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+                // We can call api to verify the OTP here or on an explicit button click
+                //  Toast.makeText(getApplicationContext(), "Hello", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        editText9.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (editText9.getText().toString().length() == 0) {
+                    editText8.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                // We can call api to verify the OTP here or on an explicit button click
+                if (!editText9.getText().toString().equals("")) {
+                    referral_code = editText1.getText().toString() + editText2.getText().toString() + editText3.getText().toString() + editText4.getText().toString() + editText5.getText().toString() + editText6.getText().toString() + editText7.getText().toString() + editText8.getText().toString() + editText9.getText().toString();
+                    new userReferralCode().execute();
+                    //Toast.makeText(getApplicationContext(), referral_code, Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    successCode.setVisibility(View.GONE);
+                    usedCode.setVisibility(View.GONE);
+                    failCode.setVisibility(View.GONE);
+                }
+            }
+        });
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -240,7 +592,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                 return false;
             }
         });
-        setGooglePlusButtonText(btnSignIn,res.getString(R.string.xsi));
+        setGooglePlusButtonText(btnSignIn, res.getString(R.string.xsi));
     }
 
 
@@ -275,7 +627,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
             prefEditor.putString("userEmail", email);
             prefEditor.putString("pic_name", personPhotoUrl);
             prefEditor.commit();
-
+            account_status = "3";
             new userRegistration().execute();
 
            /* txtName.setText(personName);
@@ -312,6 +664,8 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
+        } else {
+            mCallbackManager.onActivityResult(requestCode, resultCode, data);
         }
     }
 
@@ -338,6 +692,16 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                     handleSignInResult(googleSignInResult);
                 }
             });
+        }
+
+        //
+        // Check if user is signed in (non-null) and update UI accordingly.
+        FirebaseUser currentUser = mFirebaseAuth.getCurrentUser();
+        if (currentUser != null) {
+            //   Log.i(TAG, "onStart: Someone logged in <3"+currentUser.getDisplayName()+" "+currentUser.getEmail());
+            //  Log.i(TAG, "onStart: Someone logged in <3"+currentUser.getDisplayName()+" "+currentUser.getEmail());
+        } else {
+            Log.i(TAG, "onStart: No one logged in :/");
         }
     }
 
@@ -374,6 +738,35 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
         }
     }
 
+    //facebook
+    private void handleFacebookAccessToken(AccessToken token) {
+        Log.d(TAG, "handleFacebookAccessToken:" + token);
+
+        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
+        mFirebaseAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInWithCredential:success");
+                            FirebaseUser user = mFirebaseAuth.getCurrentUser();
+                            Log.i(TAG, "onComplete: login completed with user: " + user.getDisplayName());
+
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInWithCredential:failure", task.getException());
+                            Toast.makeText(RegisterNGetStartActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+
+                        // ...
+                    }
+                });
+    }
+
+
+    //
     private class userRegistration extends AsyncTask<Void, Void, Void> {
         @Override
         protected void onPreExecute() {
@@ -408,8 +801,9 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                         put("t_zone", localTime);
                         put("country_code", preferences.getString("country_code", ""));
                         put("r_country_code", preferences.getString("r_country_code", ""));
-                        put("latitude", preferences.getString("ur_l",""));
-                        put("longitude", preferences.getString("ur_lo",""));
+                        put("latitude", preferences.getString("ur_l", ""));
+                        put("longitude", preferences.getString("ur_lo", ""));
+                        put("account_status", account_status);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -451,7 +845,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
         @Override
         protected void onPostExecute(Void args) {
             if (status) {
-            //    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                //    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
                 if (!jsonObject.isNull("user_id")) {
                     try {
                         JSONArray ujsonArray = jsonObject.getJSONArray("user_id");
@@ -469,8 +863,8 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                             prefEditor.putString("user_mobile", UJsonObject.getString("user_mobile"));
                             prefEditor.putString("pic_name", UJsonObject.getString("profilePath"));
                             prefEditor.putString("notifyonoff", "1");
-                            prefEditor.putString("app_login", "3");
-                            prefEditor.putString("account_status", "3");
+                            prefEditor.putString("app_login", account_status);
+                            prefEditor.putString("account_status", account_status);
                             prefEditor.putInt("units_for_area", 15);
                             prefEditor.remove("apply_u_referral_code");
                             prefEditor.remove("apply_U_referral_status");
@@ -497,7 +891,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                 firstTime += 1 * 1000;
                 alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, 60 * 1000, pendingIntent);
                 if (lf.equals("1")) {
-                    Intent intent = new Intent(RegisterNGetStartActivity.this, BusinessExpandableListViewActivity.class);
+                    Intent intent = new Intent(RegisterNGetStartActivity.this, BusinessMainCategoryActivity.class);
                     startActivity(intent);
                     finish();
                 } else {
@@ -509,7 +903,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                 // mProgressDialog.dismiss();
             } else {
                 // Close the progressdialog
-               // Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                // Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
                 // mProgressDialog.dismiss();
 
             }
@@ -542,8 +936,8 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                         put("mobile_device", deviceId);
                         put("fcm_id", token);
                         put("t_zone", localTime);
-                        put("latitude", preferences.getString("ur_l",""));
-                        put("longitude", preferences.getString("ur_lo",""));
+                        put("latitude", preferences.getString("ur_l", ""));
+                        put("longitude", preferences.getString("ur_lo", ""));
 
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -594,7 +988,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                             prefEditor.putString("user_id", UJsonObject.getString("id"));
                             prefEditor.putInt("units_for_area", 15);
                             prefEditor.putString("favloc", "0");
-                            prefEditor.putString("user_name",  res.getString(R.string.jguestlog));
+                            prefEditor.putString("user_name", res.getString(R.string.jguestlog));
                             prefEditor.putString("account_status", "1");
                             prefEditor.putString("notifyonoff", "1");
                             prefEditor.commit();
@@ -617,7 +1011,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                 long firstTime = SystemClock.elapsedRealtime();
                 firstTime += 1 * 1000;
                 alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, 60 * 1000, pendingIntent);
-                Intent intent = new Intent(RegisterNGetStartActivity.this, BusinessExpandableListViewActivity.class);
+                Intent intent = new Intent(RegisterNGetStartActivity.this, BusinessMainCategoryActivity.class);
                 startActivity(intent);
                 finish();
 
@@ -625,7 +1019,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
                 // mProgressDialog.dismiss();
             } else {
                 // Close the progressdialog
-               // Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                // Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
                 // mProgressDialog.dismiss();
 
             }
@@ -801,6 +1195,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
             }
         }
     }
+
     private void loadLanguage() {
         Locale locale = new Locale(getLangCode());
         Locale.setDefault(locale);
@@ -814,6 +1209,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
         String langCode = preferences.getString(KEY_LANG, "en");
         return langCode;
     }
+
     protected boolean isJSONValid(String registrationResponse) {
         // TODO Auto-generated method stub
         try {
@@ -829,6 +1225,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
         }
         return true;
     }
+
     protected void setGooglePlusButtonText(SignInButton signInButton, String buttonText) {
         // Find the TextView that is inside of the SignInButton and set its text
         for (int i = 0; i < signInButton.getChildCount(); i++) {
@@ -841,6 +1238,7 @@ public class RegisterNGetStartActivity extends AppCompatActivity implements View
             }
         }
     }
+
     //
     @Override
     public void onBackPressed() {

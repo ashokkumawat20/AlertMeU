@@ -322,6 +322,7 @@ public class JsonHelper {
                 youTubeDAO.setVideo_description(object.getString("video_description"));
                 youTubeDAO.setVideo_description_hindi(object.getString("video_description_hindi"));
                 youTubeDAO.setVideo_link(object.getString("video_link"));
+                youTubeDAO.setHindi_video_link(object.getString("hindi_video_link"));
                 youTubeDAOArrayList.add(youTubeDAO);
             }
 

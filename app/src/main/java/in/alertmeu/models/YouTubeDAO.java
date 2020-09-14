@@ -5,7 +5,7 @@ public class YouTubeDAO {
     String video_description = "";
     String video_description_hindi = "";
     String video_link = "";
-
+    String hindi_video_link = "";
     public YouTubeDAO() {
     }
 
@@ -45,5 +45,13 @@ public class YouTubeDAO {
 
     public void setVideo_description_hindi(String video_description_hindi) {
         this.video_description_hindi = video_description_hindi;
+    }
+
+    public String getHindi_video_link() {
+        return hindi_video_link;
+    }
+
+    public void setHindi_video_link(String hindi_video_link) {
+        this.hindi_video_link = hindi_video_link;
     }
 }

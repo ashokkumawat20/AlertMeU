@@ -228,7 +228,7 @@ public class ReEnterPassctivity extends AppCompatActivity {
                 long firstTime = SystemClock.elapsedRealtime();
                 firstTime += 1 * 1000;
                 alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, 60 * 1000, pendingIntent);
-                Intent intent = new Intent(ReEnterPassctivity.this, BusinessExpandableListViewActivity.class);
+                Intent intent = new Intent(ReEnterPassctivity.this, BusinessMainCategoryActivity.class);
                 startActivity(intent);
                 finish();
 

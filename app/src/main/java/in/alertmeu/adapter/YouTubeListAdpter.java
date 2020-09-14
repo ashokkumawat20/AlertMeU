@@ -85,8 +85,14 @@ public class YouTubeListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHol
                 int ID = (Integer) v.getTag();
                 Log.e("", "list Id" + ID);
                 current = data.get(ID);
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(current.getVideo_link()));
-                context.startActivity(intent);
+                if (preferences.getString("ulang", "").equals("en")) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(current.getVideo_link()));
+                    context.startActivity(intent);
+                }
+                else if (preferences.getString("ulang", "").equals("hi")) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(current.getHindi_video_link()));
+                    context.startActivity(intent);
+                }
             }
         });
         myHolder.shareVideo.setOnClickListener(new View.OnClickListener() {
@@ -98,10 +104,18 @@ public class YouTubeListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHol
                 Intent shareIntent = new Intent();
                 shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                shareIntent.putExtra(Intent.EXTRA_TEXT, current.getVideo_description() + "\n" + current.getVideo_link());
-                // shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
-                shareIntent.setType("text/plain");
-                context.startActivity(Intent.createChooser(shareIntent, "Share Video with"));
+                if (preferences.getString("ulang", "").equals("en")) {
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, current.getVideo_description() + "\n" + current.getVideo_link());
+                    // shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+                    shareIntent.setType("text/plain");
+                    context.startActivity(Intent.createChooser(shareIntent, res.getString(R.string.swith)));
+                }
+                else if (preferences.getString("ulang", "").equals("hi")) {
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, current.getVideo_description_hindi() + "\n" + current.getHindi_video_link());
+                    // shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+                    shareIntent.setType("text/plain");
+                    context.startActivity(Intent.createChooser(shareIntent, res.getString(R.string.swith)));
+                }
 
             }
         });

@@ -40,7 +40,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.github.javiersantos.appupdater.AppUpdater;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -72,6 +72,7 @@ import java.util.TimeZone;
 
 import in.alertmeu.R;
 import in.alertmeu.activity.BusinessExpandableListViewActivity;
+import in.alertmeu.activity.BusinessMainCategoryActivity;
 import in.alertmeu.activity.HomePageActivity;
 import in.alertmeu.activity.RegisterNGetStartActivity;
 import in.alertmeu.activity.UserProfileSettingActivity;
@@ -145,8 +146,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
 
         View v = inflater.inflate(R.layout.fragment_home, container, false);
         res = getResources();
-        AppUpdater appUpdater = new AppUpdater(getActivity());
-        appUpdater.start();
+
         preferences = getActivity().getSharedPreferences("Prefrence", getActivity().MODE_PRIVATE);
         prefEditor = preferences.edit();
         prefEditor.putString("t_markers", "" + 0);
@@ -202,7 +202,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
 
         } catch (Exception e) {
         }
-        mResultReceiver = new AddressResultReceiver(new Handler());
+      //  mResultReceiver = new AddressResultReceiver(new Handler());
         if (checkPlayServices()) {
             // If this check succeeds, proceed with normal processing.
             // Otherwise, prompt user to get valid Play Services APK.
@@ -417,7 +417,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
             @Override
             public void onClick(View v) {
                 if (AppStatus.getInstance(getActivity()).isOnline()) {
-                    Intent intent = new Intent(getActivity(), BusinessExpandableListViewActivity.class);
+                    Intent intent = new Intent(getActivity(), BusinessMainCategoryActivity.class);
                     startActivity(intent);
                 } else {
 
@@ -462,7 +462,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
                     Location mLocation = new Location("");
                     mLocation.setLatitude(mCenterLatLong.latitude);
                     mLocation.setLongitude(mCenterLatLong.longitude);
-                    startIntentService(mLocation);
+                  //  startIntentService(mLocation);
                     save_latitude = mCenterLatLong.latitude;
                     save_longitude = mCenterLatLong.longitude;
                     // mLocationMarkerText.setText("Lat : " + String.format("%.06f", mCenterLatLong.latitude) + "," + "Long : " + String.format("%.06f", mCenterLatLong.longitude));
@@ -483,7 +483,13 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
             latitude = Double.parseDouble(preferences.getString("favlat", ""));
             longitude = Double.parseDouble(preferences.getString("favlong", ""));
             latLng = new LatLng(latitude, longitude);
-            updateMapData();
+            if (AppStatus.getInstance(getActivity()).isOnline()) {
+                updateMapData();
+            } else {
+
+                Toast.makeText(getActivity(), Constant.INTERNET_MSG, Toast.LENGTH_SHORT).show();
+            }
+
         }
 
         if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -591,7 +597,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
             }
         });
 
-        updateMapData();
+        if (AppStatus.getInstance(getActivity()).isOnline()) {
+            updateMapData();
+        } else {
+
+            Toast.makeText(getActivity(), Constant.INTERNET_MSG, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -757,8 +768,13 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
             googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLong));
             googleMap.animateCamera(CameraUpdateFactory.zoomTo(zoom));
             // mLocationMarkerText.setText("Lat : " + String.format("%.06f", latitude) + "," + "Long : " + String.format("%.06f", latitude));
-            startIntentService(location);
-            updateMapData();
+          //  startIntentService(location);
+            if (AppStatus.getInstance(getActivity()).isOnline()) {
+                updateMapData();
+            } else {
+
+                Toast.makeText(getActivity(), Constant.INTERNET_MSG, Toast.LENGTH_SHORT).show();
+            }
 
         } else {
             Toast.makeText(getActivity(), "Sorry! unable to create maps", Toast.LENGTH_SHORT).show();
@@ -916,7 +932,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback, Google
             mCityOutput = resultData.getString(AppUtils.LocationConstants.LOCATION_DATA_CITY);
             mStateOutput = resultData.getString(AppUtils.LocationConstants.LOCATION_DATA_STREET);
 
-            displayAddressOutput();
+          //  displayAddressOutput();
 
             // Show a toast message if an address was found.
             if (resultCode == AppUtils.LocationConstants.SUCCESS_RESULT) {

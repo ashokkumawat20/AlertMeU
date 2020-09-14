@@ -26,6 +26,7 @@ public class PlacesDisplayTask extends AsyncTask<Object, Integer, List<LocationD
     GoogleMap googleMap;
     private static Listener mListener;
     private static Listener mListener1;
+
     @Override
     protected List<LocationDAO> doInBackground(Object... inputObj) {
         Context context = (Context) inputObj[2];
@@ -51,36 +52,41 @@ public class PlacesDisplayTask extends AsyncTask<Object, Integer, List<LocationD
     @Override
     protected void onPostExecute(List<LocationDAO> list) {
         // googleMap.clear();
-        for (int i = 0; i < list.size(); i++) {
-            MarkerOptions markerOptions = new MarkerOptions();
-            List<LocationDAO> listData = list;
-            double lat = Double.parseDouble(listData.get(i).getLatitude());
-            double lng = Double.parseDouble(listData.get(i).getLongitude());
-            // String placeName = googlePlace.get("place_name");
-            // String vicinity = googlePlace.get("vicinity");
-            LatLng latLng = new LatLng(lat, lng);
-            markerOptions.position(latLng);
-            markerOptions.title(listData.get(i).getId());
-            markerOptions.snippet(listData.get(i).getPath() + "#" + listData.get(i).getRq_code() + "#" + listData.get(i).getTitle() + "#" + listData.get(i).getDescription() + "#" + listData.get(i).getBusiness_name() + "#" + listData.get(i).getAddress() + "#" + listData.get(i).getS_time() + "#" + listData.get(i).getE_time() + "#" + listData.get(i).getS_date() + "#" + listData.get(i).getE_date() + "#" + listData.get(i).getLikecnt() + "#" + listData.get(i).getDislikecnt() + "#" + listData.get(i).getBusiness_number() + "#" + listData.get(i).getDescribe_limitations() + "#" + listData.get(i).getBusiness_main_category() + "#" + listData.get(i).getBusiness_subcategory() + "#" + listData.get(i).getBusiness_email());
-            googleMap.addMarker(markerOptions);
+        try {
+            for (int i = 0; i < list.size(); i++) {
+                MarkerOptions markerOptions = new MarkerOptions();
+                List<LocationDAO> listData = list;
+                double lat = Double.parseDouble(listData.get(i).getLatitude());
+                double lng = Double.parseDouble(listData.get(i).getLongitude());
+                // String placeName = googlePlace.get("place_name");
+                // String vicinity = googlePlace.get("vicinity");
+                LatLng latLng = new LatLng(lat, lng);
+                markerOptions.position(latLng);
+                markerOptions.title(listData.get(i).getId());
+                markerOptions.snippet(listData.get(i).getPath() + "#" + listData.get(i).getRq_code() + "#" + listData.get(i).getTitle() + "#" + listData.get(i).getDescription() + "#" + listData.get(i).getBusiness_name() + "#" + listData.get(i).getAddress() + "#" + listData.get(i).getS_time() + "#" + listData.get(i).getE_time() + "#" + listData.get(i).getS_date() + "#" + listData.get(i).getE_date() + "#" + listData.get(i).getLikecnt() + "#" + listData.get(i).getDislikecnt() + "#" + listData.get(i).getBusiness_number() + "#" + listData.get(i).getDescribe_limitations() + "#" + listData.get(i).getBusiness_main_category() + "#" + listData.get(i).getBusiness_subcategory() + "#" + listData.get(i).getBusiness_email());
+                googleMap.addMarker(markerOptions);
 
+            }
+            if (list.size() > 0) {
+                mListener.messageReceived("" + 1);
+            } else {
+                mListener.messageReceived("" + 0);
+            }
+            prefEditor.putString("t_markers", "" + list.size());
+            prefEditor.commit();
+            mListener1.messageReceived("" + list.size());
+        } catch (Exception e) {
         }
-        if (list.size() > 0) {
-            mListener.messageReceived("" + 1);
-        } else {
-            mListener.messageReceived("" + 0);
-        }
-        prefEditor.putString("t_markers", "" + list.size());
-        prefEditor.commit();
-        mListener1.messageReceived("" +list.size());
     }
 
     public static void bindListener(Listener listener) {
         mListener = listener;
     }
+
     public static void bindListener1(Listener listener) {
         mListener1 = listener;
     }
+
     protected boolean isJSONValid(String callReoprtResponse2) {
         // TODO Auto-generated method stub
         try {

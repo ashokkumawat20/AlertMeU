@@ -1,4 +1,6 @@
 <resources>
+    <string name="facebook_app_id">653514792036575</string>
+    <string name="fb_login_protocol_scheme">fb653514792036575</string>
     <string name="app_name">Alert MeU</string>
     <string name="title_activity_maps">Map</string>
     <string name="login">Login</string>
@@ -257,4 +259,9 @@
     <string name="youAreNotUpdatedMessage">A new version of Alert MeU is available. Please update to version\s</string>
     <string name="youAreNotUpdatedMessage1">\s now</string>
     <string name="update">Update</string>
+    <string name="regReSbb">Please select your sub category</string>
+    <string name="jdus">Data saved</string>
+    <string name="jdusj">Select Image</string>
+    <string name="fblogin">Facebook Login</string>
+    <string name="swith">Share Video with</string>
 </resources>

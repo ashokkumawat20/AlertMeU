@@ -3,6 +3,8 @@ package in.alertmeu.adapter;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -10,18 +12,24 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.Locale;
 
 import in.alertmeu.R;
+import in.alertmeu.imageUtils.ImageLoader;
 import in.alertmeu.models.SubCatModeDAO;
 import in.alertmeu.utils.Config;
+import in.alertmeu.utils.Listener;
 import in.alertmeu.utils.WebClient;
 
 
@@ -42,7 +50,10 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
     String msg = "";
     String deleteResponse = "", businessCatResponse = "";
 
-
+    private static Listener mListener;
+    Resources res;
+    private static final String FILE_NAME = "file_lang";
+    private static final String KEY_LANG = "key_lang";
     // create constructor to innitilize context and data sent from MainActivity
     public SubCatListAdpter(Context context, List<SubCatModeDAO> data) {
         this.context = context;
@@ -50,13 +61,15 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
         this.data = data;
         preferences = context.getSharedPreferences("Prefrence", Context.MODE_PRIVATE);
         prefEditor = preferences.edit();
+        res = context.getResources();
+        loadLanguage(context);
 
     }
 
     // Inflate the layout when viewholder created
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = inflater.inflate(R.layout.layout_maincat_details, parent, false);
+        View view = inflater.inflate(R.layout.layout_subcat_details, parent, false);
         MyHolder holder = new MyHolder(view);
 
         return holder;
@@ -64,16 +77,32 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     // Bind data
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         final int pos = position;
         // Get current position of item in recyclerview to bind data and assign values from list
         final MyHolder myHolder = (MyHolder) holder;
         current = data.get(position);
 
+        if (preferences.getString("ulang", "").equals("en")) {
+            myHolder.notes.setText(current.getSubcategory_name());
+            myHolder.notes.setTag(position);
+        } else if (preferences.getString("ulang", "").equals("hi")) {
+            myHolder.notes.setText(current.getSubcategory_name_hindi());
+            myHolder.notes.setTag(position);
+        }
 
-        myHolder.notes.setText(current.getSubcategory_name());
-        myHolder.notes.setTag(position);
+        if (!current.getImage_path().equals("")) {
+           // ImageLoader imageLoader = new ImageLoader(context);
+          //  imageLoader.DisplayImage(current.getImage_path(), myHolder.subimage);
+            myHolder.subimage.setTag(position);
+            Picasso.with(context).load(current.getImage_path()).noPlaceholder().into((ImageView) myHolder.subimage);
 
+        } else {
+
+            myHolder.subimage.setImageDrawable(context.getResources().getDrawable(R.drawable.default_sub_category));
+            myHolder.subimage.setTag(position);
+
+        }
         myHolder.id.setText(current.getId());
         myHolder.id.setTag(position);
         myHolder.chkBox.setTag(position);
@@ -81,18 +110,19 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
         myHolder.chkBox.setTag(data.get(position));
         if (current.getChecked_status().equals("1")) {
             myHolder.chkBox.setChecked(true);
+            current.setSelected(true);
         } else {
             myHolder.chkBox.setChecked(false);
+            current.setSelected(false);
         }
         myHolder.chkBox.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 CheckBox cb = (CheckBox) v;
                 SubCatModeDAO contact = (SubCatModeDAO) cb.getTag();
-
                 contact.setSelected(cb.isChecked());
                 data.get(pos).setSelected(cb.isChecked());
-
-                if (cb.isChecked()) {
+              //  mListener.messageReceived(message);
+                /*if (cb.isChecked()) {
                     //Toast.makeText(v.getContext(), "Clicked on Checkbox: " + cb.getText() + " is " + cb.isChecked() + data.get(pos).getId(), Toast.LENGTH_LONG).show();
                     Config.VALUE.add(data.get(pos).getId());
                     id = data.get(pos).getId();
@@ -107,7 +137,7 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
                     new deleteSale().execute();
                     Config.VALUE.remove(data.get(pos).getId());
 
-                }
+                }*/
 
 
             }
@@ -125,7 +155,7 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         TextView txt_date, notes, id;
         CheckBox chkBox;
-
+        ImageView subimage;
 
         // create constructor to get widget reference
         public MyHolder(View itemView) {
@@ -135,7 +165,7 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
             notes = (TextView) itemView.findViewById(R.id.comments);
             id = (TextView) itemView.findViewById(R.id.id);
             chkBox = (CheckBox) itemView.findViewById(R.id.chkBox);
-
+            subimage = (ImageView) itemView.findViewById(R.id.subimage);
 
         }
 
@@ -222,6 +252,13 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
 
+    // method to access in activity after updating selection
+    public List<SubCatModeDAO> getSservicelist() {
+        return data;
+    }
+    public static void bindListener(Listener listener) {
+        mListener = listener;
+    }
     //
     private class deleteSale extends AsyncTask<Void, Void, Void> {
         @Override
@@ -322,5 +359,17 @@ public class SubCatListAdpter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return true;
     }
 
+    private String getLangCode(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(FILE_NAME, context.MODE_PRIVATE);
+        String langCode = preferences.getString(KEY_LANG, "");
+        return langCode;
+    }
 
+    private void loadLanguage(Context context) {
+        Locale locale = new Locale(getLangCode(context));
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        config.locale = locale;
+        context.getResources().updateConfiguration(config, context.getResources().getDisplayMetrics());
+    }
 }

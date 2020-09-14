@@ -385,8 +385,10 @@ public class HomePageActivity extends AppCompatActivity {
             /*TabLayout.Tab tabitem = tabLayout.newTab();
             tabitem.setCustomView(prepareTabView(i));
             tabLayout.addTab(tabitem);*/
-
-            tabLayout.getTabAt(i).setCustomView(prepareTabView(i));
+            try {
+                tabLayout.getTabAt(i).setCustomView(prepareTabView(i));
+            } catch (Exception e) {
+            }
         }
 
 

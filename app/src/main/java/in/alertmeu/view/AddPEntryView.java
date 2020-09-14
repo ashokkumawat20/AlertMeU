@@ -67,6 +67,7 @@ public class AddPEntryView extends DialogFragment {
     LinearLayout hshow;
     TextView txtId;
     Resources res;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // TODO Auto-generated method stub
@@ -97,6 +98,7 @@ public class AddPEntryView extends DialogFragment {
         verify = (Button) registerView.findViewById(R.id.verify);
         hshow = (LinearLayout) registerView.findViewById(R.id.hshow);
         txtId = (TextView) registerView.findViewById(R.id.txtId);
+
         ccp = (CountryCodePicker) registerView.findViewById(R.id.ccp);
         ccp.registerCarrierNumberEditText(edtMobileOb);
         // ccp.setNumberAutoFormattingEnabled(true);
@@ -125,18 +127,23 @@ public class AddPEntryView extends DialogFragment {
 
                 email = edtMobileOb.getText().toString().trim();
                 String s = otp.getText().toString().trim();
-                if (id.equals(s)) {
-                    if (AppStatus.getInstance(context).isOnline()) {
-                        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(placeBtn.getWindowToken(), 0);
-                        new addBusinessAccountDetails().execute();
+                if (!businessMobile.equals("")) {
+                    if (id.equals(s)) {
+                        if (AppStatus.getInstance(context).isOnline()) {
+                            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.hideSoftInputFromWindow(placeBtn.getWindowToken(), 0);
+                            new addBusinessAccountDetails().execute();
 
+                        } else {
+
+                            Toast.makeText(context, res.getString(R.string.jpcnc), Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-
-                        Toast.makeText(context,res.getString(R.string.jpcnc), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), res.getString(R.string.jcodemis), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(getActivity(), res.getString(R.string.jpcnc), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), res.getString(R.string.jevmn), Toast.LENGTH_SHORT).show();
+
                 }
 
             }
@@ -144,7 +151,9 @@ public class AddPEntryView extends DialogFragment {
         verify.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                otp.setVisibility(View.VISIBLE);
+                hshow.setVisibility(View.VISIBLE);
+                txtId.setVisibility(View.VISIBLE);
                 if (validate(businessMobile)) {
                     businessMobile = ccp.getFullNumberWithPlus();
                     Random random = new Random();
@@ -164,11 +173,16 @@ public class AddPEntryView extends DialogFragment {
 
                 if (isValidNumber) {
                     businessMobile = ccp.getFullNumberWithPlus();
+                    placeBtn.setVisibility(View.GONE);
+                    verify.setVisibility(View.VISIBLE);
                     //  Toast.makeText(getApplicationContext(), "Your mobile number is valid.", Toast.LENGTH_SHORT).show();
                     // verifyMobileNumber();
                 } else {
                     businessMobile = "";
                     otp.setVisibility(View.GONE);
+                    hshow.setVisibility(View.GONE);
+                    txtId.setVisibility(View.GONE);
+
                     //Toast.makeText(getApplicationContext(), "Please Enter valid mobile number.", Toast.LENGTH_SHORT).show();
                 }
             }

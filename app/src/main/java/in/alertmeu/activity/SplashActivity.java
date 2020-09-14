@@ -118,7 +118,7 @@ public class SplashActivity extends AppCompatActivity {
 
             }
         }
-        forceUpdate();
+       // forceUpdate();
 
     }
 

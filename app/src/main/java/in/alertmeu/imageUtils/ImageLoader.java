@@ -94,8 +94,8 @@ public class ImageLoader {
                 httpsConn.setSSLSocketFactory(SSLCertificateSocketFactory.getInsecure(0, null));
                 httpsConn.setHostnameVerifier(new AllowAllHostnameVerifier());
             }
-            conn.setConnectTimeout(30000);
-            conn.setReadTimeout(30000);
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
             conn.setInstanceFollowRedirects(true);
             InputStream is = conn.getInputStream();
             OutputStream os = new FileOutputStream(f);

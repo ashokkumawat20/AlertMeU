@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.AsyncTask;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,6 +31,7 @@ import in.alertmeu.utils.Listener;
 import in.alertmeu.utils.WebClient;
 import in.alertmeu.view.AddEEntryView;
 import in.alertmeu.view.AddPEntryView;
+import in.alertmeu.view.SubCatDetailsView;
 
 public class UpdateUserProfileActivity extends AppCompatActivity {
     String userName = "";
@@ -169,6 +171,9 @@ public class UpdateUserProfileActivity extends AppCompatActivity {
             public void onClick(View v) {
                 AddEEntryView addEEntryView = new AddEEntryView();
                 addEEntryView.show(getSupportFragmentManager(), "addEEntryView");
+               // SubCatDetailsView subCatDetailsView = new SubCatDetailsView();
+              //  subCatDetailsView.show(getSupportFragmentManager(), "subCatDetailsView");
+
             }
         });
         Edit.setOnClickListener(new View.OnClickListener() {

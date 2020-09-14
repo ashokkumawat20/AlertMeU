@@ -35,6 +35,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.squareup.picasso.Picasso;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
@@ -149,9 +151,10 @@ public class UserProfileSettingActivity extends AppCompatActivity {
         if (!preferences.getString("pic_name", "").equals("")) {
             // ImageLoader imageLoader = new ImageLoader(UserProfileSettingActivity.this);
             //  imageLoader.DisplayImage(preferences.getString("pic_name", ""), profilePic);
-            ImageloaderNew imageLoader = new ImageloaderNew(UserProfileSettingActivity.this);
-            profilePic.setTag(preferences.getString("pic_name", ""));
-            imageLoader.DisplayImage(preferences.getString("pic_name", ""), UserProfileSettingActivity.this, profilePic);
+           // ImageloaderNew imageLoader = new ImageloaderNew(UserProfileSettingActivity.this);
+          //  profilePic.setTag(preferences.getString("pic_name", ""));
+          //  imageLoader.DisplayImage(preferences.getString("pic_name", ""), UserProfileSettingActivity.this, profilePic);
+            Picasso.with(UserProfileSettingActivity.this).load(preferences.getString("pic_name", "")).noPlaceholder().into((ImageView) profilePic);
 
         } else {
             profilePic.setImageResource(R.drawable.profile_pic);
@@ -159,18 +162,29 @@ public class UserProfileSettingActivity extends AppCompatActivity {
         if (!preferences.getString("user_name", "").equals("")) {
             userName.setText(preferences.getString("user_name", ""));
         }
-        if (!preferences.getString("userEmail", "").equals("")) {
-            usermailid.setText(preferences.getString("userEmail", ""));
-        } else {
-            usermailid.setVisibility(View.GONE);
-        }
-        if (!preferences.getString("userMobile", "").equals("")) {
-            userMobile.setText(preferences.getString("userMobile", ""));
-        } else {
+        if (preferences.getString("app_login", "").equals("4")) {
             userMobile.setVisibility(View.GONE);
-
+            usermailid.setText( res.getString(R.string.fblogin));
         }
-        referralCode.setText(preferences.getString("user_referral_code", ""));
+        else {
+            if (!preferences.getString("userEmail", "").equals("")) {
+                usermailid.setText(preferences.getString("userEmail", ""));
+            } else {
+                usermailid.setVisibility(View.GONE);
+            }
+            if (!preferences.getString("userMobile", "").equals("")) {
+                userMobile.setText(preferences.getString("userMobile", ""));
+            } else {
+                userMobile.setVisibility(View.GONE);
+
+            }
+        }
+
+        try {
+            String qr = preferences.getString("user_referral_code", "").substring(0, 1) + "-" + preferences.getString("user_referral_code", "").substring(1, 5) + "-" + preferences.getString("user_referral_code", "").substring(5, 9);
+            referralCode.setText(qr);
+        }catch (Exception e)
+        {}
         profilePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -249,7 +263,8 @@ public class UserProfileSettingActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Intent intent = new Intent(UserProfileSettingActivity.this, BusinessExpandableListViewActivity.class);
+              //  Intent intent = new Intent(UserProfileSettingActivity.this, BusinessExpandableListViewActivity.class);
+                Intent intent = new Intent(UserProfileSettingActivity.this, BusinessMainCategoryActivity.class);
                 startActivity(intent);
 
             }
@@ -296,16 +311,23 @@ public class UserProfileSettingActivity extends AppCompatActivity {
     }
 
     private void galleryIntent() {
-       /* Intent intent = new Intent();
+       /* Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("image/*");
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        intent.setAction(Intent.ACTION_GET_CONTENT);
+        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_MULTIPLE);*/
         Intent pickPhoto = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         pickPhoto.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        pickPhoto.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+  //      pickPhoto.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
         pickPhoto.setType("image/*");
         startActivityForResult(pickPhoto, PICK_IMAGE_MULTIPLE);
+
+      /*  Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        getIntent.setType("image/*");
+        Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        pickIntent.setType("image/*");
+        Intent chooserIntent = Intent.createChooser(getIntent, res.getString(R.string.jdusj));
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
+        startActivityForResult(chooserIntent, PICK_IMAGE_MULTIPLE);*/
 
     }
 
@@ -342,7 +364,7 @@ public class UserProfileSettingActivity extends AppCompatActivity {
 
                     Uri mImageUri = data.getData();
                     mArrayUri.add(mImageUri);
-
+                    if (!mImageUri.toString().contains("content://com.google.android.apps.docs")) {
                     // Get the cursor
                     Cursor cursor = getContentResolver().query(mImageUri, filePathColumn, null, null, null);
                     // Move to first row
@@ -378,6 +400,9 @@ public class UserProfileSettingActivity extends AppCompatActivity {
                             map.add(imagesEncodedList.get(i).toString());
                         }
                         new ImageUploadTask().execute(count + "", getFileName(mArrayUri.get(count)));
+                    }
+                    } else {
+                        Toast.makeText(UserProfileSettingActivity.this, res.getString(R.string.jsunc), Toast.LENGTH_SHORT).show();
                     }
 
                 } else {
