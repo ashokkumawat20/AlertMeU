@@ -117,6 +117,8 @@ public class BusinessMainCategoryActivity extends AppCompatActivity {
             mProgressDialog.setTitle(res.getString(R.string.jpw));
             // Set progressdialog message
             mProgressDialog.setMessage(res.getString(R.string.jsql));
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setCancelable(false);
             //mProgressDialog.setIndeterminate(false);
             // Show progressdialog
             mProgressDialog.show();

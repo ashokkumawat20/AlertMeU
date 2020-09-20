@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -67,7 +68,7 @@ public class SubCatDetailsView extends DialogFragment {
     private static Listener mListener;
     ImageView back_arrow1;
     TextView title;
-
+    CheckBox chkAll;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -90,6 +91,7 @@ public class SubCatDetailsView extends DialogFragment {
         back_arrow1 = (ImageView) registerView.findViewById(R.id.back_arrow1);
         title=(TextView) registerView.findViewById(R.id.title);
         title.setText(preferences.getString("m_name_cat",""));
+        showhide= (LinearLayout) registerView.findViewById(R.id.showhide);
         data = new ArrayList<>();
         if (AppStatus.getInstance(getActivity()).isOnline()) {
             new getSubCatList().execute();
@@ -267,6 +269,28 @@ public class SubCatDetailsView extends DialogFragment {
 
             }
         });
+        chkAll = (CheckBox)registerView.findViewById(R.id.chkAllSelected);
+        chkAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CheckBox cb = (CheckBox) v;
+                if (cb.isChecked()) {
+                    List<SubCatModeDAO> list = ((SubCatListAdpter) subCatListAdpter).getSservicelist();
+                    for (SubCatModeDAO workout : list) {
+                        workout.setSelected(true);
+                        workout.setChecked_status("1");
+                    }
+                    ((SubCatListAdpter) mainCatList.getAdapter()).notifyDataSetChanged();
+                } else {
+                    List<SubCatModeDAO> list = ((SubCatListAdpter) subCatListAdpter).getSservicelist();
+                    for (SubCatModeDAO workout : list) {
+                        workout.setSelected(false);
+                        workout.setChecked_status("0");
+                    }
+                    ((SubCatListAdpter) mainCatList.getAdapter()).notifyDataSetChanged();
+                }
+            }
+        });
         return registerView;
     }
 
@@ -391,9 +415,10 @@ public class SubCatDetailsView extends DialogFragment {
                 mainCatList.setAdapter(subCatListAdpter);
                 mainCatList.setLayoutManager(new LinearLayoutManager(getActivity()));
                 subCatListAdpter.notifyDataSetChanged();
-
+                showhide.setVisibility(View.VISIBLE);
             } else {
                 btnNext.setVisibility(View.GONE);
+                showhide.setVisibility(View.GONE);
             }
         }
     }

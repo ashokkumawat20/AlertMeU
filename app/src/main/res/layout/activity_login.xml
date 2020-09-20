@@ -52,6 +52,17 @@
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
             android:orientation="vertical">
+            <Button
+                android:id="@+id/signGuestButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="5dp"
+                android:drawableLeft="@drawable/small_alert"
+                android:text="@string/regGuestUser"
+                android:textAllCaps="false"
+                android:textColor="@color/textcolor"
+                android:textSize="16sp" />
+
             <com.facebook.login.widget.LoginButton
                 android:id="@+id/login_button"
                 android:layout_width="match_parent"

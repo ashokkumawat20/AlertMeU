@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 public class Config {
 
-    public static final String BASE_URL = "https://www.alertmeu.com/alertmeutest/api/";
-    public static final String URL_AlertMeUImage = "https://www.alertmeu.com/LocationImagesTest/";
-    // public static final String BASE_URL = "https://www.alertmeu.com/alertmeu/api/";
+   // public static final String BASE_URL = "https://www.alertmeu.com/alertmeutest/api/";
+  //  public static final String URL_AlertMeUImage = "https://www.alertmeu.com/LocationImagesTest/";
+     public static final String BASE_URL = "https://www.alertmeu.com/alertmeu/api/";
     public static final String URL_ADDUSERBYA = BASE_URL + "user/adduserByA";
     public static final String URL_CHECKINGREFERRALCODE = BASE_URL + "user/checkingReferralCode";
     public static final String URL_ADDUSERASGUEST = BASE_URL + "user/adduserAsGuest";
@@ -60,9 +60,10 @@ public class Config {
     public static final String URL_UPDATEUSERP = BASE_URL + "user/updateUserP";
     public static final String URL_GETALLYOUTUBELIST = BASE_URL + "user/getAllYouTubeList";
     public static final String URL_SHOPPERPRECATSYNCDATA = BASE_URL + "user/shopperPreCatSyncData";
+   public static final String URL_GETSUNOBYC = BASE_URL + "user/getSuNoByC";
     // Directory name to store captured images
     public static final String IMAGE_DIRECTORY_NAME = "AlertMeU";
-    // public static final String URL_AlertMeUImage = "https://www.alertmeu.com/LocationImages/";
+     public static final String URL_AlertMeUImage = "https://www.alertmeu.com/LocationImages/";
 
     public static ArrayList<String> VALUE = new ArrayList<String>();
 

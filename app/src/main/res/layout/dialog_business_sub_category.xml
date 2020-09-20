@@ -49,16 +49,17 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/showhide"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/l1"
+            android:visibility="gone"
             android:orientation="horizontal"
             android:weightSum="1">
-
-
             <TextView
                 android:id="@+id/title"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight=".8"
                 android:layout_height="match_parent"
                 android:layout_marginLeft="@dimen/spacing_large"
                 android:layout_marginTop="@dimen/spacing_large"
@@ -67,6 +68,14 @@
                 android:textColor="#000000"
                 android:textSize="16sp"
                 android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/chkAllSelected"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginRight="8dp"
+                android:text="@string/jall"
+                android:layout_marginTop="@dimen/spacing_large"
+                android:layout_weight=".2" />
         </LinearLayout>
     </RelativeLayout>
 

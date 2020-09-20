@@ -78,7 +78,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     SharedPreferences.Editor prefEditor;
     private EditText u_emailid, u_pass, u_mobile;
     private TextView title, register, loginEmailButton, loginMobileButton, hide1;
-    private Button emailNext, mobileNext;
+    private Button emailNext, mobileNext,signGuestButton;
     String userId = "", userMobile = "", userPassword = "", loginResponse = "", msg = "", registrationResponse = "", referral_status = "0";
     boolean status;
     ProgressDialog mProgressDialog;
@@ -113,7 +113,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         FacebookSdk.sdkInitialize(getApplicationContext());
         mCallbackManager = CallbackManager.Factory.create();
         LoginButton loginButton = findViewById(R.id.login_button);
-
+        signGuestButton = (Button) findViewById(R.id.signGuestButton);
         //Setting the permission that we need to read
         loginButton.setReadPermissions("user_photos", "email", "user_birthday");
 
@@ -240,6 +240,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 loginMobileButton.setVisibility(View.GONE);
                 loginEmailButton.setVisibility(View.VISIBLE);
 
+            }
+        });
+        signGuestButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (AppStatus.getInstance(getApplicationContext()).isOnline()) {
+                    new guestUserRegistration().execute();
+
+                } else {
+
+                    Toast.makeText(getApplicationContext(), res.getString(R.string.jpcnc), Toast.LENGTH_SHORT).show();
+                }
             }
         });
         loginEmailButton.setOnClickListener(new View.OnClickListener() {
@@ -928,5 +940,121 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         super.onBackPressed();
         Intent setIntent = new Intent(LoginActivity.this, MainActivity.class);
         startActivity(setIntent);
+    }
+
+    private class guestUserRegistration extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Create a progressdialog
+            // mProgressDialog = new ProgressDialog(LoginActivity.this);
+            // Set progressdialog title
+            // mProgressDialog.setTitle("Please Wait...");
+            // Set progressdialog message
+            //  mProgressDialog.setMessage("Registration...");
+            //mProgressDialog.setIndeterminate(false);
+            // Show progressdialog
+            // mProgressDialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            final String token = SharedPrefManager.getInstance(getApplicationContext()).getDeviceToken();
+            jsonObj = new JSONObject() {
+                {
+                    try {
+
+
+                        put("mobile_device", deviceId);
+                        put("fcm_id", token);
+                        put("t_zone", localTime);
+                        put("latitude", preferences.getString("ur_l", ""));
+                        put("longitude", preferences.getString("ur_lo", ""));
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            WebClient serviceAccess = new WebClient();
+            Log.i("json", "json" + jsonObj);
+            registrationResponse = serviceAccess.SendHttpPost(Config.URL_ADDUSERASGUEST, jsonObj);
+            Log.i("resp", "registrationResponse" + registrationResponse);
+
+
+            if (registrationResponse.compareTo("") != 0) {
+                if (isJSONValid(registrationResponse)) {
+
+                    try {
+
+                        jsonObject = new JSONObject(registrationResponse);
+                        status = jsonObject.getBoolean("status");
+                        msg = jsonObject.getString("message");
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+
+                } else {
+                    //Toast.makeText(getApplicationContext(), "Please check your webservice", Toast.LENGTH_LONG).show();
+                }
+            } else {
+
+                // Toast.makeText(getApplicationContext(), "Please check your network connection.", Toast.LENGTH_LONG).show();
+
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void args) {
+            if (status) {
+                // Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                if (!jsonObject.isNull("user_id")) {
+                    try {
+                        JSONArray ujsonArray = jsonObject.getJSONArray("user_id");
+                        for (int i = 0; i < ujsonArray.length(); i++) {
+                            JSONObject UJsonObject = ujsonArray.getJSONObject(i);
+                            prefEditor.putString("user_id", UJsonObject.getString("id"));
+                            prefEditor.putInt("units_for_area", 15);
+                            prefEditor.putString("favloc", "0");
+                            prefEditor.putString("user_name", res.getString(R.string.jguestlog));
+                            prefEditor.putString("account_status", "1");
+                            prefEditor.putString("notifyonoff", "1");
+                            prefEditor.commit();
+                        }
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+                }
+                Intent myIntent = new Intent(LoginActivity.this, MyBroadcastReceiver.class);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(LoginActivity.this, 0, myIntent, 0);
+                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(System.currentTimeMillis());
+                calendar.add(Calendar.SECOND, 60); // first time
+                long frequency = 10 * 1000; // in ms
+
+                // We want the alarm to go off 30 seconds from now.
+                long firstTime = SystemClock.elapsedRealtime();
+                firstTime += 1 * 1000;
+                alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, 60 * 1000, pendingIntent);
+                Intent intent = new Intent(LoginActivity.this, BusinessMainCategoryActivity.class);
+                startActivity(intent);
+                finish();
+
+                // Close the progressdialog
+                // mProgressDialog.dismiss();
+            } else {
+                // Close the progressdialog
+                // Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                // mProgressDialog.dismiss();
+
+            }
+        }
     }
 }

@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -92,7 +93,7 @@ public class ContactUsActivity extends AppCompatActivity {
     ImageView btnSend;
     EditText descEdtTxt;
     ImageView imageOne, imageTwo, imageThree;
-    String desc = "";
+    String desc = "",balanceAmountResponse="";
     String imageOneName = "", imageTwoName = "", imageThreename = "", addContactUsResponse = "", message = "", img_1 = "", img_2 = "", img_3 = "";
     Bitmap myBitmap;
     Uri picUri;
@@ -104,12 +105,18 @@ public class ContactUsActivity extends AppCompatActivity {
     private JSONObject jsonLeadObj, jsonLeadObj1, jsonLeadObjReq;
     JSONArray jsonArray;
     boolean status;
-    int count = 0;
+    int count = 0,clc = 0;
     private ProgressDialog dialog;
     MultipartEntity entity;
     Resources res ;
     private static final String FILE_NAME = "file_lang";
     private static final String KEY_LANG = "key_lang";
+    WebView webview;
+    TextView website,Phone,Email;
+    ProgressDialog mProgressDialog1;
+    JSONObject jsonObj;
+    String phone,email;
+    private Uri fileUri1 = null, fileUri2 = null, fileUri3 = null; // file url to store image
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,17 +125,25 @@ public class ContactUsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_contact_us);
         preferences = getSharedPreferences("Prefrence", Context.MODE_PRIVATE);
         prefEditor = preferences.edit();
-
+        webview = new WebView(this);
         btnSend = (ImageView) findViewById(R.id.btnSend);
         descEdtTxt = (EditText) findViewById(R.id.descEdtTxt);
         imageOne = (ImageView) findViewById(R.id.imageOne);
         imageTwo = (ImageView) findViewById(R.id.imageTwo);
         imageThree = (ImageView) findViewById(R.id.imageThree);
+        website=(TextView)findViewById(R.id.website);
+        Phone=(TextView)findViewById(R.id.Phone);
+        Email=(TextView)findViewById(R.id.Email);
         imagesEncodedList = new ArrayList<String>();
+        if (AppStatus.getInstance(getApplicationContext()).isOnline()) {
+            new dueFeesAvailable().execute();
+        } else {
+
+            Toast.makeText(getApplicationContext(), res.getString(R.string.jpcnc), Toast.LENGTH_SHORT).show();
+        }
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"),
                 Locale.getDefault());
         Date currentLocalTime = calendar.getTime();
-
         DateFormat date = new SimpleDateFormat("ZZZZZ", Locale.getDefault());
         localTime = date.format(currentLocalTime);
         btnSend.setOnClickListener(new View.OnClickListener() {
@@ -138,7 +153,23 @@ public class ContactUsActivity extends AppCompatActivity {
 
                     desc = descEdtTxt.getText().toString().trim();
                     if (!desc.equals("")) {
-                        new addContactUsDetails().execute();
+                        if (clc == 0) {
+                            mArrayUri.clear();
+                            imagesEncodedList.clear();
+                            if (!img_1.equals("")) {
+                                mArrayUri.add(fileUri1);
+                                imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, fileUri1));
+                            }
+                            if (!img_2.equals("")) {
+                                mArrayUri.add(fileUri2);
+                                imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, fileUri2));
+                            }
+                            if (!img_3.equals("")) {
+                                mArrayUri.add(fileUri3);
+                                imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, fileUri3));
+                            }
+                            new addContactUsDetails().execute();
+                        }
                         // Toast.makeText(getApplicationContext(), imageOneName + "," + imageTwoName + "," + imageThreename + "size:" + mArrayUri.size(), Toast.LENGTH_SHORT).show();
 
                     } else {
@@ -151,7 +182,14 @@ public class ContactUsActivity extends AppCompatActivity {
                 }
             }
         });
-
+        website.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Uri uri = Uri.parse("http://www.alertmeu.com/"); // missing 'http://' will cause crashed
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(intent);
+            }
+        });
         imageOne.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -250,7 +288,8 @@ public class ContactUsActivity extends AppCompatActivity {
                 if (data.getData() != null) {
 
                     Uri mImageUri = data.getData();
-                    mArrayUri.add(mImageUri);
+                  //  mArrayUri.add(mImageUri);
+                    fileUri1 = mImageUri;
                     if (!mImageUri.toString().contains("content://com.google.android.apps.docs")) {
                     picUri = mImageUri;
                     // Get the cursor
@@ -268,11 +307,11 @@ public class ContactUsActivity extends AppCompatActivity {
 
                     Log.d("LOG_TAG", "imageToUpload" + getPathFromUri(ContactUsActivity.this, mImageUri));
 
-                    imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, mImageUri));
+                   // imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, mImageUri));
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     // down sizing image as it throws OutOfMemory Exception for larger
                     // images
-                    options.inSampleSize = 8;
+                    options.inSampleSize = 1;
                     final Bitmap bitmap = BitmapFactory.decodeFile(getPathFromUri(ContactUsActivity.this, mImageUri), options);
                     //
                     Bitmap orientedBitmap = ExifUtil.rotateBitmap(getPathFromUri(ContactUsActivity.this, mImageUri), bitmap);
@@ -294,7 +333,8 @@ public class ContactUsActivity extends AppCompatActivity {
                 if (data.getData() != null) {
 
                     Uri mImageUri = data.getData();
-                    mArrayUri.add(mImageUri);
+                   // mArrayUri.add(mImageUri);
+                    fileUri2 = mImageUri;
                     if (!mImageUri.toString().contains("content://com.google.android.apps.docs")) {
                     picUri = mImageUri;
                     // Get the cursor
@@ -312,11 +352,11 @@ public class ContactUsActivity extends AppCompatActivity {
 
                     Log.d("LOG_TAG", "imageToUpload" + getPathFromUri(ContactUsActivity.this, mImageUri));
 
-                    imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, mImageUri));
+                 //   imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, mImageUri));
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     // down sizing image as it throws OutOfMemory Exception for larger
                     // images
-                    options.inSampleSize = 8;
+                    options.inSampleSize = 1;
                     final Bitmap bitmap = BitmapFactory.decodeFile(getPathFromUri(ContactUsActivity.this, mImageUri), options);
                     //
                     Bitmap orientedBitmap = ExifUtil.rotateBitmap(getPathFromUri(ContactUsActivity.this, mImageUri), bitmap);
@@ -338,7 +378,8 @@ public class ContactUsActivity extends AppCompatActivity {
                 if (data.getData() != null) {
 
                     Uri mImageUri = data.getData();
-                    mArrayUri.add(mImageUri);
+                  //  mArrayUri.add(mImageUri);
+                    fileUri3 = mImageUri;
                     if (!mImageUri.toString().contains("content://com.google.android.apps.docs")) {
                     picUri = mImageUri;
                     // Get the cursor
@@ -356,11 +397,11 @@ public class ContactUsActivity extends AppCompatActivity {
 
                     Log.d("LOG_TAG", "imageToUpload" + getPathFromUri(ContactUsActivity.this, mImageUri));
 
-                    imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, mImageUri));
+                  //  imagesEncodedList.add(getPathFromUri(ContactUsActivity.this, mImageUri));
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     // down sizing image as it throws OutOfMemory Exception for larger
                     // images
-                    options.inSampleSize = 8;
+                    options.inSampleSize = 1;
                     final Bitmap bitmap = BitmapFactory.decodeFile(getPathFromUri(ContactUsActivity.this, mImageUri), options);
                     //
                     Bitmap orientedBitmap = ExifUtil.rotateBitmap(getPathFromUri(ContactUsActivity.this, mImageUri), bitmap);
@@ -536,14 +577,14 @@ public class ContactUsActivity extends AppCompatActivity {
         protected void onPreExecute() {
             super.onPreExecute();
             // Create a progressdialog
-            mProgressDialog = new ProgressDialog(ContactUsActivity.this);
+           // mProgressDialog = new ProgressDialog(ContactUsActivity.this);
             // Set progressdialog title
-            mProgressDialog.setTitle(res.getString(R.string.jpw));
+          //  mProgressDialog.setTitle(res.getString(R.string.jpw));
             // Set progressdialog message
-            mProgressDialog.setMessage(res.getString(R.string.jsq));
+          //  mProgressDialog.setMessage(res.getString(R.string.jsq));
             //mProgressDialog.setIndeterminate(false);
             // Show progressdialog
-            mProgressDialog.show();
+          //  mProgressDialog.show();
         }
 
         @Override
@@ -610,7 +651,7 @@ public class ContactUsActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void args) {
             // Close the progressdialog
-            mProgressDialog.dismiss();
+           // mProgressDialog.dismiss();
             if (status) {
                 if (mArrayUri.size() > 0) {
                     for (int i = 0; i < imagesEncodedList.size(); i++) {
@@ -784,6 +825,79 @@ public class ContactUsActivity extends AppCompatActivity {
             if (cursor != null) {
                 cursor.close();
             }
+        }
+    }
+
+    private class dueFeesAvailable extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Create a progressdialog
+            mProgressDialog1 = new ProgressDialog(ContactUsActivity.this);
+            // Set progressdialog title
+           // mProgressDialog1.setTitle(res.getString(R.string.jpw));
+           // mProgressDialog1.setIndeterminate(true);
+           // mProgressDialog1.setCancelable(false);
+           // mProgressDialog1.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            jsonObj = new JSONObject() {
+                {
+                    try {
+                        put("country_code", preferences.getString("country_code", ""));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            WebClient serviceAccess = new WebClient();
+            Log.i("json", "json" + jsonLeadObj1);
+            balanceAmountResponse = serviceAccess.SendHttpPost(Config.URL_GETSUNOBYC, jsonObj);
+            Log.i("resp", "balanceAmountResponse" + balanceAmountResponse);
+
+
+            if (balanceAmountResponse.compareTo("") != 0) {
+                if (isJSONValid(balanceAmountResponse)) {
+                     JSONArray leadJsonObj = null;
+                    try {
+                        JSONObject jObject = new JSONObject(balanceAmountResponse);
+                        status = jObject.getBoolean("status");
+                        if (status) {
+                            JSONArray introJsonArray = jObject.getJSONArray("balanceamount");
+                            for (int i = 0; i < introJsonArray.length(); i++) {
+                                JSONObject introJsonObject = introJsonArray.getJSONObject(i);
+                                phone = introJsonObject.getString("phone_no");
+                                email = introJsonObject.getString("email_id");
+                            }
+
+
+                        }
+
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+
+                } else {
+                    //  Toast.makeText(getApplicationContext(), res.getString(R.string.jpcnc), Toast.LENGTH_LONG).show();
+                }
+            } else {
+
+                //  Toast.makeText(getApplicationContext(), res.getString(R.string.jpcnc), Toast.LENGTH_LONG).show();
+
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void args) {
+         //   mProgressDialog1.dismiss();
+            Phone.setText("Phone / WhatsApp:"+phone);
+            Email.setText("Email:"+email);
         }
     }
 }

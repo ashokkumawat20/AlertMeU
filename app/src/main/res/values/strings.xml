@@ -264,4 +264,6 @@
     <string name="jdusj">Select Image</string>
     <string name="fblogin">Facebook Login</string>
     <string name="swith">Share Video with</string>
+    <string name="jall">All</string>
+    <string name="website"><u>www.alertmeu.com</u></string>
 </resources>
